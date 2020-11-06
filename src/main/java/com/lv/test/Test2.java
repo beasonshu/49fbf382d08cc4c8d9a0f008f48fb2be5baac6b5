@@ -6,25 +6,55 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 
-public class Test {
+public class Test2 {
     public static void main(String[] args) {
-        try {
-            csv2jsonvpid("/Users/shuxinghu/Desktop/RechargeInfo.csv");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            csv2jsonvpid("/Users/shuxinghu/Desktop/googs.csv");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        String temp = "200";
+        String ec = encode(temp);
+        System.out.println(ec);
+        System.out.println(decode(ec));
+//        String ja = Testss.jiami(temp);
+//        System.out.println(ja);
+//        String jie = Testss.jiemi(ja);
+//        System.out.println(jie);
+
     }
+
+    static String encode(String source){
+        StringBuilder buffer = new StringBuilder();
+        for(int i=0;i<source.length();i++){
+            int intNum = source.charAt(i);
+            buffer.append(intNum);
+        }
+        return buffer.toString();
+    }
+
+    static String decode(String source){
+        StringBuilder buffer = new StringBuilder();
+        for(int i=0;i<source.length()/2;i++){
+            char t = (char) Integer.parseInt(source.substring(i*2,(i+1)*2));
+            buffer.append(t);
+        }
+        return buffer.toString();
+    }
+
+
 
 
 
     private static void csv2jsonvpid(String csvPath) throws IOException {
         int startRow=1;//起始行索引（0开始）
-        int gameGoodsIdCol=0;//游戏实际商品id列索引
-        int chanGoodsIdCol=2;//渠道商品id列索引
-        String chanPrex="c";//渠道商品ID前缀
+        int gameGoodsIdCol=5;//游戏实际商品id列索引
+        int chanGoodsIdCol=0;//渠道商品id列索引
+        String chanPrex="";//渠道商品ID前缀
         List<String> lines = FileUtils.readLines(new File(csvPath));
         int size = lines.size();
         String rowData;

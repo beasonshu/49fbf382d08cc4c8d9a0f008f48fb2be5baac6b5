@@ -1,0 +1,129 @@
+@echo off
+echo.
+echo /======================================/
+echo / 项目：DOS 导出程序                   /
+echo / 作者：胡炯（炯炯侠）                 /
+echo / 修改：张扬                           /
+echo / 最后改进时间：2014/11/24             /
+echo / 改进目标：暂时去掉文件合并           /
+echo /======================================/
+echo.
+
+SETLOCAL ENABLEDELAYEDEXPANSION
+%~d0
+cd %~dp0
+cd ..
+echo %cd%
+REM 检查Java环境
+if "%JAVA_HOME%" == "" goto NoJavaHome
+if not exist "%JAVA_HOME%\bin\java.exe" goto NoJavaHome
+if not exist "%JAVA_HOME%\bin\native2ascii.exe" goto NoJavaHome
+
+set version_tmp=%time:~6,2%%date:~5,2%%date:~8,2%
+
+:InputVersion
+set/p version=请输入导出的版本号(如不输入则以res为版本号):
+if "%version%" == "" (
+    echo 采用res为版本号
+    set version=res
+)
+echo 版本号:[%version%]
+ping localhost -n 3 > nul
+
+:InputPath
+rem set/p respath=设置资源的相对路径：
+if "%respath%" == "" (
+    echo 采用默认路径[res]
+    set respath=res
+)
+if not exist "%cd%\%respath%" (
+    echo 资源不存在%cd%\%respath%
+    goto InputPath
+)
+
+set target=bin\%version%
+echo.
+echo ============ 删除上次导出目录 ===================
+rmdir bin /s/q
+
+echo.
+echo ============ 创建导出目录 =======================
+md %target%
+
+echo.
+echo ============ 导出目录结构 =======================
+xcopy %respath% %target%\ /t/e
+
+echo.
+echo ============ 开始导出文件 =======================
+for /r %respath% %%i in (*) do (
+    set curpath=%%~i
+    set newpath=!curpath:%cd%\%respath%=%cd%\%target%!
+    if not "%%~xi"==".bak" (
+        if not "%%~xi"==".css" (
+            if not "%%~xi"==".js" (
+                echo 获取!curpath!
+                echo 发布至!newpath!
+                copy !curpath! !newpath!
+            )
+        )
+        if "%%~xi"==".css" (
+            echo 压缩发布!curpath!
+            "!JAVA_HOME!\bin\java.exe" -jar "export\yuicompressor.jar" --charset UTF-8 "!curpath!" -o "!newpath!"
+            rem echo 成功压缩!newpath!
+        )
+        if "%%~xi"==".js" (
+            echo 压缩发布!curpath!
+            "!JAVA_HOME!\bin\java.exe" -jar "export\yuicompressor.jar" --charset UTF-8 "!curpath!" -o "!newpath!"
+            rem echo 成功压缩!newpath!
+        )
+    )
+)
+
+####TODO
+
+echo.
+echo ============ 删除合成临时目录 ===================
+rd %export_temp_path% /s/q
+
+echo.
+echo ============ 罗列导出后文件 =====================
+for /r %cd%\%target% %%d in (*.css,*.js) do (
+    echo %%~d
+)
+
+echo.
+echo ============ 完成导出 ===========================
+ENDLOCAL
+pause>nul
+exit
+
+
+:MergeFile
+echo %curpath%
+echo.
+echo ============ 开始合成 =====================
+for /r %curpath% %%b in (*.css,*.js) do (
+    IF not "%%~nb"=="miniplanet" (
+		rem 使用该合成文件名是为了移回到导出目录时，再次遍历时不会被找到
+        set tmpfile=%export_temp_path%\miniplanet_mg%%~xb
+        echo MG %%~b
+        type %%~b >> !tmpfile!
+    )
+    echo DE %%~b
+    del %%~b
+)
+
+echo.
+echo ============ 将 miniplanet_mg 文件转移到导出目录中 =========
+move %tmpfile% %curpath%
+goto FindMiniplanet
+
+
+:NoJavaHome
+echo.
+echo **** 请先安装JDK并设置JAVA_HOME环境变量
+echo.
+ENDLOCAL
+pause>nul
+exit
